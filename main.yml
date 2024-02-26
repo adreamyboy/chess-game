@@ -1,0 +1,39 @@
+name: CI/CD Pipeline
+
+on:
+  push: 
+    branches: 
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Tests
+        run: npm test
+
+      - name: Build Production Bundle
+        run: npm run build
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: Deploy to Staging
+        uses: easingthemes/ssh-deploy@v2.2.3
+        with:
+          server: ${{ secrets.STAGING_SERVER }}
+          remote_port: ${{ secrets.STAGING_PORT }}
+          remote_user: ${{ secrets.STAGING_USER }}
+          remote_password: ${{ secrets.STAGING_PASSWORD }}
+          source: "dist/" # Path to the production build directory
+          target: "/var/www/html" # Path on the staging server where the application will be deployed
